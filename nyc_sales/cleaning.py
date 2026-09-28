@@ -1,4 +1,4 @@
-"""Loading, initial cleaning and removal of anomalies (notebook sections 1-2)."""
+"""Loading, initial cleaning and removal of anomalies"""
 
 import warnings
 from pathlib import Path

@@ -1,4 +1,4 @@
-"""Feature engineering and final preprocessing (notebook section 5)."""
+"""Feature engineering and final preprocessing"""
 
 import numpy as np
 import pandas as pd

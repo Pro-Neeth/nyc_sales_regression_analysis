@@ -1,5 +1,4 @@
 numpy>=1.26,<3
-# pandas 3 changes how .replace() handles categorical columns, which the cleaning step relies on
 pandas>=2.2,<3
 scikit-learn>=1.6
 matplotlib>=3.9

@@ -1,4 +1,4 @@
-"""Distribution and correlation analysis of the cleaned data (notebook sections 3-4)."""
+"""Distribution and correlation analysis of the cleaned data"""
 
 import matplotlib.pyplot as plt
 import pandas as pd

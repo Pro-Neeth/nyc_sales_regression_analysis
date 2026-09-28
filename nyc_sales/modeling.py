@@ -1,4 +1,4 @@
-"""Ridge vs. Lasso regression with nested cross-validation (notebook section 6)."""
+"""Ridge vs. Lasso regression with nested cross-validation"""
 
 import matplotlib.pyplot as plt
 import numpy as np
