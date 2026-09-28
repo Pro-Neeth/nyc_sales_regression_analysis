@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from nyc_sales.config import KAGGLE_DATASET_URL, RAW_DATA_PATH
+from nyc_sales.config import KAGGLE_DATASET_URL, MIN_SALE_PRICE, RAW_DATA_PATH
 
 
 def load_raw_data(path=RAW_DATA_PATH):
@@ -20,8 +20,8 @@ def load_raw_data(path=RAW_DATA_PATH):
     return pd.read_csv(path)
 
 
-def clean_data(nyc_df, verbose=False):
-    """Fix the dtypes and drop the anomalous samples.
+def clean_data(nyc_df, verbose=False, min_sale_price=MIN_SALE_PRICE):
+    """Fix the dtypes and drop the anomalous samples, including sales under min_sale_price.
 
     With verbose=True, the analysis behind each cleaning decision is printed along the way.
     """
@@ -133,7 +133,7 @@ def clean_data(nyc_df, verbose=False):
     nyc_df['TAX CLASS AT PRESENT'] = nyc_df['TAX CLASS AT PRESENT'].astype('category')
 
     if verbose:
-        # Abnormal is defined as when some features = 0 when they shouldnt or if houses are sold for $1
+        # Abnormal is defined as when some features = 0 when they shouldnt or if houses are sold below min_sale_price
 
         # Inconsistent is defined as when residential + commercial > total
         numeric_cols = ['SALE PRICE', 'LAND SQUARE FEET', 'GROSS SQUARE FEET', 'YEAR BUILT', 'ZIP CODE', 'RESIDENTIAL UNITS', 'COMMERCIAL UNITS', 'TOTAL UNITS']
@@ -142,7 +142,7 @@ def clean_data(nyc_df, verbose=False):
             if col in ['RESIDENTIAL UNITS', 'COMMERCIAL UNITS', 'TOTAL UNITS']:
                 continue
 
-            abnormal = ((nyc_df[col] <= 10).sum() / len(nyc_df)) * 100 if col == 'SALE PRICE' else ((nyc_df[col] == 0).sum() / len(nyc_df)) * 100
+            abnormal = ((nyc_df[col] < min_sale_price).sum() / len(nyc_df)) * 100 if col == 'SALE PRICE' else ((nyc_df[col] == 0).sum() / len(nyc_df)) * 100
             nan_val = (nyc_df[col].isna().sum() / len(nyc_df)) * 100
             total = abnormal + nan_val
 
@@ -181,9 +181,21 @@ def clean_data(nyc_df, verbose=False):
     if verbose:
         print(nyc_df.skew(numeric_only=True))
 
-    # Dropping anomalies among LSF, GSF, and Sale price
+    # Dropping anomalies among LSF and GSF
     nyc_df = nyc_df[nyc_df['LAND SQUARE FEET'] != 0].reset_index(drop=True)
     nyc_df = nyc_df[nyc_df['GROSS SQUARE FEET'] != 0].reset_index(drop=True)
-    nyc_df = nyc_df[nyc_df['SALE PRICE'] > 10].reset_index(drop=True)
     nyc_df = nyc_df.dropna(subset=['GROSS SQUARE FEET', 'LAND SQUARE FEET', 'SALE PRICE']).reset_index(drop=True)
+
+    if verbose:
+        # Low sale prices cluster on round numbers and sit far below the usual price per square foot
+        below_floor = nyc_df['SALE PRICE'] < min_sale_price
+        print(f"Sales under ${min_sale_price:,}: {below_floor.sum()} ({below_floor.mean() * 100:.2f}%)")
+        print(nyc_df.loc[below_floor, 'SALE PRICE'].value_counts().head(10))
+
+        price_per_sqft = nyc_df['SALE PRICE'] / nyc_df['GROSS SQUARE FEET']
+        print(f"Median price per gross square foot: ${price_per_sqft[below_floor].median():,.2f} under "
+              f"${min_sale_price:,}, ${price_per_sqft[~below_floor].median():,.2f} at or above")
+
+    # Dropping sales under min_sale_price, they are non-market transfers at token prices rather than market sales
+    nyc_df = nyc_df[nyc_df['SALE PRICE'] >= min_sale_price].reset_index(drop=True)
     return nyc_df

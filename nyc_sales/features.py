@@ -55,14 +55,11 @@ def engineer_features(nyc_df, verbose=False):
         ]
         print(f"Both mismatch: {len(both_mismatch)/len(nyc_df)*100}% of samples")
 
-    # Create binary columns for changes
-    nyc_df['TAX CLASS CHANGED'] = (nyc_df['TAX CLASS AT PRESENT'] != nyc_df['TAX CLASS AT TIME OF SALE']).astype(int)
-    nyc_df['BUILDING CLASS CHANGED'] = (nyc_df['BUILDING CLASS AT PRESENT'] != nyc_df['BUILDING CLASS AT TIME OF SALE']).astype(int)
+    # The AT PRESENT classes were recorded when the dataset was published, after the sale, so they aren't known
+    # at the time of sale. Few samples changed class anyway, so keep only the TIME OF SALE columns
+    nyc_df = nyc_df.drop(['TAX CLASS AT PRESENT', 'BUILDING CLASS AT PRESENT'], axis=1)
 
-    # Drop the time of sale columns
-    nyc_df = nyc_df.drop(['TAX CLASS AT TIME OF SALE', 'BUILDING CLASS AT TIME OF SALE'], axis=1)
-
-    # BUILDING CLASS AT PRESENT is a more detailed version of BUILDING CLASS CATEGORY
+    # BUILDING CLASS AT TIME OF SALE is a more detailed version of BUILDING CLASS CATEGORY
     nyc_df = nyc_df.drop(['BUILDING CLASS CATEGORY'], axis=1)
 
     # NEIGHBORHOOD captures location better than the postal ZIP CODE
@@ -84,7 +81,7 @@ def engineer_features(nyc_df, verbose=False):
     nyc_df = nyc_df.drop(['SALE MONTH'], axis=1)
 
     # One Hot Encoding
-    columns_to_encode = ['BOROUGH', 'TAX CLASS AT PRESENT', 'BUILDING CLASS AT PRESENT', 'SALE SEASON']
+    columns_to_encode = ['BOROUGH', 'TAX CLASS AT TIME OF SALE', 'BUILDING CLASS AT TIME OF SALE', 'SALE SEASON']
 
     for col in nyc_df.select_dtypes(include='category').columns:
         nyc_df[col] = nyc_df[col].astype(str)

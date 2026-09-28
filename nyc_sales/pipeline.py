@@ -46,7 +46,7 @@ def run_pipeline(data_path=RAW_DATA_PATH, reports_dir=REPORTS_DIR, skip_eda=Fals
 
     results_dir.mkdir(parents=True, exist_ok=True)
     for name, results_df in results.items():
-        results_df.to_csv(results_dir / f'{name.lower()}_nested_cv.csv', index=False)
+        results_df.to_csv(results_dir / f"{name.lower().replace(' ', '_')}_nested_cv.csv", index=False)
     comparison_df.to_csv(results_dir / 'model_comparison.csv', index=False)
     logger.info("Saved figures to %s and results to %s", figures_dir, results_dir)
 
@@ -67,8 +67,8 @@ def save_figures(figures, figures_dir, show=False):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog='python -m nyc_sales',
-        description='Clean the NYC rolling sales data, run the EDA and compare Ridge vs. Lasso '
-                    'regression with nested cross-validation.')
+        description='Clean the NYC rolling sales data, run the EDA and compare a mean baseline, Ridge, Lasso '
+                    'and gradient boosting with nested cross-validation.')
     parser.add_argument('--data', type=Path, default=RAW_DATA_PATH,
                         help='path to nyc-rolling-sales.csv (default: data/raw/nyc-rolling-sales.csv)')
     parser.add_argument('--reports-dir', type=Path, default=REPORTS_DIR,
